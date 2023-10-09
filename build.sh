@@ -84,6 +84,23 @@ disable_defconfig() {
     ${KERNEL_DIR}/scripts/config --file ${OUT_DIR}/.config -d $1
 }
 
+upload() {
+    local KERNELZIP="$1"
+    local API_KEY="$2"
+
+    if [ -z "$API_KEY" ]; then
+        echo -e "${yellow}API_KEY is not provided.${nocol}"
+        read -p "Please enter your API key: " API_KEY
+        if [ -z "$API_KEY" ]; then
+            echo -e "${red}No API key provided. Cannot upload the file.${nocol}"
+            return 1
+        fi
+    fi
+
+    echo -e "${blue}Uploading $KERNELZIP${nocol}"
+    bash <(curl -s https://devuploads.com/upload.sh) -f "$KERNELZIP" -k "$API_KEY"
+}
+
 setup_env && clean_up
 build vendor/super-whyred_defconfig
 disable_defconfig CONFIG_NEWCAM_BLOBS
@@ -106,5 +123,5 @@ if [ x$1 == xc ]; then
     build Image
     $BSDIFF ${OUT_DIR}/Image ${BUILTIMAGE} ${ANYKERNEL_DIR}/bspatch/cam_newblobs
     make_zip
-    bash <(curl -s https://devuploads.com/upload.sh) -f "$KERNELZIP"  -k $api_key
+    upload
 fi
